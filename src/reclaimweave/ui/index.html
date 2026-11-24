@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reclaim — The Agent Companion Layer</title>
+  <meta name="description" content="WHOOP for the life around agent work. Anti-attention handoff, biometric-guided step-away redirects, social free-now presence, and an honest reclaimed-life ledger." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #F5F2EB;
+      --surface: #FCFBF8;
+      --surface-warm: #EFECE3;
+      --ink: #1B231F;
+      --ink-muted: #58645D;
+      --ink-faint: #849088;
+      --hairline: rgba(27, 35, 31, 0.11);
+      --hairline-strong: rgba(27, 35, 31, 0.22);
+      --green: #2B5B4B;
+      --green-soft: #E3EFEA;
+      --yellow: #9E6E1E;
+      --yellow-soft: #F7EEDB;
+      --red: #A3412D;
+      --red-soft: #F8E5E0;
+      --accent: #1F3D32;
+      --accent-hover: #162D25;
+      --radius-lg: 20px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+      --shadow-soft: 0 1px 2px rgba(27, 35, 31, 0.04), 0 8px 28px rgba(27, 35, 31, 0.05);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    /* Subtle tactile paper weave texture */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.28;
+      background-image: radial-gradient(rgba(27, 35, 31, 0.06) 0.75px, transparent 0.75px);
+      background-size: 16px 16px;
+      z-index: 0;
+    }
+
+    .shell {
+      position: relative;
+      z-index: 1;
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 28px 22px 72px;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding-bottom: 22px;
+      border-bottom: 1px solid var(--hairline);
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+
+    .brand-name {
+      font-family: "Fraunces", Georgia, serif;
+      font-size: 1.45rem;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .brand-sub {
+      font-size: 0.78rem;
+      color: var(--ink-muted);
+      letter-spacing: 0.02em;
+    }
+
+    nav {
+      display: flex;
+      gap: 6px;
+    }
+
+    .nav-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--ink-muted);
+      font-family: inherit;
+      font-size: 0.86rem;
+      font-weight: 500;
+      padding: 7px 13px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 160ms ease;
+    }
+
+    .nav-btn:hover { color: var(--ink); background: rgba(27, 35, 31, 0.05); }
+    .nav-btn.active {
+      color: var(--ink);
+      background: var(--surface);
+      border-color: var(--hairline-strong);
+      box-shadow: 0 1px 2px rgba(27, 35, 31, 0.04);
+    }
+
+    .whoop-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.78rem;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: var(--surface);
+      border: 1px solid var(--hairline);
+      cursor: pointer;
+    }
+
+    .zone-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+    .zone-dot.yellow { background: var(--yellow); }
+    .zone-dot.red { background: var(--red); }
+
+    /* Views */
+    .view { display: none; padding-top: 34px; animation: fadeIn 220ms ease; }
+    .view.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h1 {
+      font-family: "Fraunces", Georgia, serif;
+      font-size: clamp(1.85rem, 4vw, 2.4rem);
+      font-weight: 400;
+      letter-spacing: -0.025em;
+      line-height: 1.18;
+      color: var(--ink);
+      margin-bottom: 10px;
+    }
+
+    .lead {
+      color: var(--ink-muted);
+      font-size: 0.98rem;
+      max-width: 58ch;
+      margin-bottom: 28px;
+    }
+
+    /* World Switch */
+    .world-switch {
+      display: inline-flex;
+      background: var(--surface-warm);
+      padding: 4px;
+      border-radius: 999px;
+      border: 1px solid var(--hairline);
+      margin-bottom: 18px;
+    }
+
+    .world-opt {
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      font-size: 0.84rem;
+      font-weight: 500;
+      color: var(--ink-muted);
+      padding: 8px 16px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 150ms ease;
+    }
+
+    .world-opt.active {
+      background: var(--surface);
+      color: var(--ink);
+      box-shadow: 0 1px 3px rgba(27, 35, 31, 0.08);
+    }
+
+    .privacy-note {
+      font-size: 0.83rem;
+      color: var(--ink-muted);
+      margin-bottom: 22px;
+      padding-left: 12px;
+      border-left: 2px solid var(--hairline-strong);
+    }
+
+    /* Primary Companion Panel */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--hairline);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      box-shadow: var(--shadow-soft);
+      margin-bottom: 24px;
+    }
+
+    .personal-fields {
+      display: none;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .personal-fields.visible { display: flex; }
+
+    select, input[type="text"] {
+      font-family: inherit;
+      font-size: 0.9rem;
+      color: var(--ink);
+      background: var(--bg);
+      border: 1px solid var(--hairline-strong);
+      border-radius: var(--radius-sm);
+      padding: 10px 13px;
+      outline: none;
+    }
+    select:focus, input[type="text"]:focus { border-color: var(--accent); }
+    input[type="text"] { flex: 1; min-width: 220px; }
+
+    .duration-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 22px;
+    }
+
+    .duration-label {
+      font-size: 0.84rem;
+      color: var(--ink-muted);
+      font-weight: 500;
+    }
+
+    .pills { display: flex; gap: 8px; }
+
+    .pill {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.82rem;
+      padding: 7px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--hairline-strong);
+      background: transparent;
+      color: var(--ink-muted);
+      cursor: pointer;
+      transition: all 140ms ease;
+    }
+    .pill:hover { color: var(--ink); border-color: var(--ink); }
+    .pill.active {
+      background: var(--ink);
+      color: var(--surface);
+      border-color: var(--ink);
+    }
+
+    .primary-cta {
+      width: 100%;
+      border: none;
+      background: var(--accent);
+      color: #F7F5EE;
+      font-family: "Fraunces", Georgia, serif;
+      font-size: 1.18rem;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      padding: 18px 24px;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: background 160ms ease, transform 120ms ease;
+    }
+    .primary-cta:hover { background: var(--accent-hover); }
+    .primary-cta:active { transform: scale(0.992); }
+
+    .secondary-btn {
+      border: 1px solid var(--hairline-strong);
+      background: var(--surface);
+      color: var(--ink);
+      font-family: inherit;
+      font-size: 0.86rem;
+      font-weight: 500;
+      padding: 9px 15px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: background 140ms ease;
+    }
+    .secondary-btn:hover { background: var(--surface-warm); }
+
+    /* Suggestions */
+    .section-kicker {
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--ink-faint);
+      font-weight: 600;
+      margin-bottom: 14px;
+    }
+
+    .suggestions-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .suggestion-card {
+      background: var(--surface);
+      border: 1px solid var(--hairline);
+      border-radius: var(--radius-md);
+      padding: 20px 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 18px;
+      transition: border-color 150ms ease, transform 150ms ease;
+    }
+    .suggestion-card:hover { border-color: var(--hairline-strong); transform: translateY(-1px); }
+    .suggestion-card.chosen {
+      background: var(--green-soft);
+      border-color: var(--green);
+    }
+
+    .sug-meta {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.74rem;
+      color: var(--ink-muted);
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+
+    .sug-title {
+      font-family: "Fraunces", Georgia, serif;
+      font-size: 1.15rem;
+      font-weight: 500;
+      margin-bottom: 4px;
+      color: var(--ink);
+    }
+
+    .sug-sub {
+      font-size: 0.88rem;
+      color: var(--ink-muted);
+      margin-bottom: 8px;
+    }
+
+    .sug-rationale {
+      font-size: 0.78rem;
+      color: var(--ink-faint);
+    }
+
+    /* Social strip */
+    .peers-strip {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .peer-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 13px 16px;
+      background: var(--surface);
+      border: 1px solid var(--hairline);
+      border-radius: var(--radius-md);
+      flex-wrap: wrap;
+    }
+
+    .peer-name { font-weight: 500; font-size: 0.92rem; }
+    .peer-detail { font-size: 0.82rem; color: var(--ink-muted); }
+
+    /* Quiet Brief */
+    .brief-card {
+      background: var(--ink);
+      color: #F5F2EB;
+      border-radius: var(--radius-lg);
+      padding: 26px 28px;
+      margin-bottom: 24px;
+    }
+
+    .brief-card .section-kicker { color: rgba(245, 242, 235, 0.58); }
+    .brief-card h2 {
+      font-family: "Fraunces", Georgia, serif;
+      font-size: 1.4rem;
+      font-weight: 400;
+      margin-bottom: 8px;
+    }
+    .brief-card p { color: rgba(245, 242, 235, 0.85); font-size: 0.95rem; margin-bottom: 18px; }
+    .brief-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .brief-btn {
+      background: rgba(245, 242, 235, 0.14);
+      border: 1px solid rgba(245, 242, 235, 0.28);
+      color: #F5F2EB;
+      font-family: inherit;
+      font-size: 0.84rem;
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+    }
+    .brief-btn:hover { background: rgba(245, 242, 235, 0.22); }
+
+    /* Ledger View */
+    .ledger-hero {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 28px;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    @media (max-width: 640px) {
+      .ledger-hero { grid-template-columns: 1fr; justify-items: center; }
+    }
+
+    .ring-wrap { position: relative; width: 188px; height: 188px; }
+    .ring-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .ring-pct {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 2rem;
+      font-weight: 500;
+      line-height: 1.1;
+    }
+    .ring-lbl { font-size: 0.74rem; color: var(--ink-muted); letter-spacing: 0.04em; text-transform: uppercase; }
+
+    .ledger-metrics {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(130px, 1fr));
+      gap: 16px;
+    }
+
+    .metric-cell {
+      padding: 14px 16px;
+      background: var(--bg);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--hairline);
+    }
+
+    .metric-val {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 1.3rem;
+      font-weight: 500;
+      color: var(--ink);
+    }
+
+    .metric-lbl { font-size: 0.78rem; color: var(--ink-muted); margin-top: 2px; }
+
+    .chart-rows { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+    .day-row {
+      display: grid;
+      grid-template-columns: 92px 1fr 78px 68px;
+      gap: 12px;
+      align-items: center;
+      font-size: 0.82rem;
+    }
+    .day-bar-track {
+      height: 10px;
+      background: var(--surface-warm);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .day-bar-fill {
+      height: 100%;
+      background: var(--green);
+      border-radius: 999px;
+    }
+
+    .honest-box {
+      margin-top: 18px;
+      padding: 14px 16px;
+      background: var(--surface-warm);
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      color: var(--ink-muted);
+    }
+
+    /* Ambient Hardware Surfaces */
+    .surfaces-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    .device-stage {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      padding: 26px 20px;
+      background: var(--surface);
+      border: 1px solid var(--hairline);
+      border-radius: var(--radius-lg);
+    }
+
+    .watch-2x2 {
+      width: 212px;
+      height: 212px;
+      border-radius: 50%;
+      background: #141A17;
+      color: #F4F1EA;
+      border: 6px solid #2D3531;
+      box-shadow: 0 12px 30px rgba(20, 26, 23, 0.22);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 22px;
+      gap: 8px;
+    }
+
+    .watch-top { font-family: "JetBrains Mono", monospace; font-size: 0.68rem; color: #90BCA9; }
+    .watch-main { font-family: "Fraunces", Georgia, serif; font-size: 1.02rem; line-height: 1.25; }
+    .watch-foot { font-size: 0.72rem; color: rgba(244, 241, 234, 0.64); }
+
+    .charm-1x1 {
+      width: 144px;
+      height: 144px;
+      border-radius: 18px;
+      background: #E9E6DC;
+      color: #161A17;
+      border: 5px solid #2A2E2B;
+      box-shadow: 0 10px 24px rgba(20, 26, 23, 0.14);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 12px;
+      font-family: "JetBrains Mono", monospace;
+      gap: 6px;
+    }
+    .charm-l1 { font-size: 0.92rem; font-weight: 600; letter-spacing: 0.04em; }
+    .charm-l2 { font-size: 0.72rem; line-height: 1.2; }
+    .charm-l3 { font-size: 0.68rem; opacity: 0.72; }
+
+    /* Biometric Calibration Controls */
+    .slider-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 16px;
+      margin: 16px 0 18px;
+    }
+
+    .slider-row label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      color: var(--ink-muted);
+      margin-bottom: 6px;
+    }
+    .slider-row input[type="range"] { width: 100%; accent-color: var(--accent); }
+
+    .preset-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+
+    .toast {
+      position: fixed;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%) translateY(16px);
+      background: var(--ink);
+      color: var(--surface);
+      font-size: 0.84rem;
+      padding: 10px 18px;
+      border-radius: 999px;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 200ms ease;
+      z-index: 20;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div class="brand">
+        <span class="brand-name">Reclaim</span>
+        <span class="brand-sub">The Agent Companion Layer</span>
+      </div>
+      <nav aria-label="Primary navigation">
+        <button class="nav-btn active" data-view="step-away" id="nav-step-away">Step Away</button>
+        <button class="nav-btn" data-view="ledger" id="nav-ledger">Ledger</button>
+        <button class="nav-btn" data-view="surfaces" id="nav-surfaces">Surfaces &amp; WHOOP</button>
+      </nav>
+      <button class="whoop-chip" id="whoop-chip" title="Open WHOOP readiness settings">
+        <span class="zone-dot" id="chip-dot"></span>
+        <span id="chip-text">REC --%</span>
+      </button>
+    </header>
+
+    <!-- VIEW 1: STEP AWAY -->
+    <main>
+      <section class="view active" id="view-step-away">
+        <h1>Hand work to the agent.<br />Take your hour back.</h1>
+        <p class="lead">
+          You don't need another dashboard to watch. Tap once when your agent starts, step away for
+          something your body actually needs, and come back to one quiet brief.
+        </p>
+
+        <div class="world-switch" role="tablist" aria-label="Operating World">
+          <button class="world-opt active" data-world="corporate" id="world-corporate">Corporate · Manual Tap</button>
+          <button class="world-opt" data-world="personal" id="world-personal">Personal · Connected Harness</button>
+        </div>
+
+        <p class="privacy-note" id="world-note">
+          <strong>Corporate mode:</strong> Zero employer integration, zero screen scraping, zero IT footprint.
+          Reclaim stores only your tap and reclaimed time — never employer code, prompts, or task names.
+        </p>
+
+        <!-- Quiet Completion Brief (appears once agent finishes) -->
+        <div class="brief-card hidden" id="brief-card">
+          <div class="section-kicker">Quiet completion brief</div>
+          <h2 id="brief-headline">Ready when you are</h2>
+          <p id="brief-summary"></p>
+          <div class="brief-actions">
+            <button class="brief-btn" id="btn-speak-brief">Play earbud voice brief</button>
+            <button class="brief-btn" id="btn-dismiss-brief">Start another handoff</button>
+          </div>
+        </div>
+
+        <!-- Handoff Initiation Panel -->
+        <div class="panel" id="handoff-panel">
+          <div class="personal-fields" id="personal-fields">
+            <select id="adapter-select" aria-label="Agent harness">
+              <option value="claude">Claude Code (Hook)</option>
+              <option value="antigravity">Antigravity (Hook)</option>
+              <option value="grokbot">Grokbot (Hook)</option>
+              <option value="cursor">Cursor (Hook)</option>
+              <option value="weaveos">WeaveOS Router (Local HTTP)</option>
+              <option value="muse">Muse (Hook)</option>
+            </select>
+            <input type="text" id="task-input" placeholder="Short personal task (e.g. Run migration & test suite)" />
+          </div>
+
+          <div class="duration-row">
+            <span class="duration-label">Rough window while agent works</span>
+            <div class="pills" id="duration-pills">
+              <button class="pill" data-min="5">5m</button>
+              <button class="pill active" data-min="15">15m</button>
+              <button class="pill" data-min="30">30m</button>
+            </div>
+          </div>
+
+          <button class="primary-cta" id="btn-handoff">I handed work to the agent</button>
+        </div>
+
+        <!-- Active Away Panel + 2-3 Calm Suggestions -->
+        <div class="hidden" id="away-section">
+          <div class="section-kicker" id="away-kicker">2–3 options sized to your WHOOP readiness</div>
+          <div class="suggestions-list" id="suggestions-list"></div>
+
+          <div class="panel" style="display:flex; justify-content:space-between; align-items:center; gap:14px; flex-wrap:wrap; padding:18px 22px;">
+            <div>
+              <div style="font-weight:500; font-size:0.92rem;" id="active-session-label">Agent is running quietly in the background.</div>
+              <div style="font-size:0.8rem; color:var(--ink-muted);">No live log stream. Return when you're ready or when your watch taps once.</div>
+            </div>
+            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+              <select id="stress-select" aria-label="Post-break stress check-in">
+                <option value="1">Feeling calm (1/5)</option>
+                <option value="2" selected>Steady (2/5)</option>
+                <option value="3">Neutral (3/5)</option>
+                <option value="4">Tense (4/5)</option>
+                <option value="5">Strained (5/5)</option>
+              </select>
+              <button class="secondary-btn" id="btn-complete-now">Agent finished · Show brief</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Social Layer: Who is free right now -->
+        <div style="margin-top:28px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <div class="section-kicker" style="margin-bottom:0;">Who on your team is free right now</div>
+            <button class="secondary-btn" id="btn-seed-demo" style="font-size:0.78rem; padding:6px 12px;">Load sample week &amp; team</button>
+          </div>
+          <div class="peers-strip" id="peers-strip"></div>
+        </div>
+      </section>
+
+      <!-- VIEW 2: LEDGER -->
+      <section class="view" id="view-ledger">
+        <h1>The Reclaimed Life Ledger</h1>
+        <p class="lead">
+          The explicit trade: hours handed to agents versus hours reclaimed away from glass —
+          read beside your WHOOP recovery, resting heart rate, and environmental footprint.
+        </p>
+
+        <div class="panel">
+          <div class="ledger-hero">
+            <div class="ring-wrap">
+              <svg viewBox="0 0 180 180" width="188" height="188" aria-label="Reclamation ratio ring">
+                <circle cx="90" cy="90" r="74" fill="none" stroke="#EAE6DC" stroke-width="14" />
+                <circle id="ring-arc" cx="90" cy="90" r="74" fill="none" stroke="#2B5B4B" stroke-width="14"
+                        stroke-linecap="round" stroke-dasharray="465" stroke-dashoffset="110"
+                        transform="rotate(-90 90 90)" style="transition: stroke-dashoffset 400ms ease;" />
+              </svg>
+              <div class="ring-center">
+                <span class="ring-pct" id="ledger-pct">--%</span>
+                <span class="ring-lbl">Reclaimed</span>
+              </div>
+            </div>
+
+            <div class="ledger-metrics">
+              <div class="metric-cell">
+                <div class="metric-val" id="m-avoided">0m</div>
+                <div class="metric-lbl">Screen time avoided</div>
+              </div>
+              <div class="metric-cell">
+                <div class="metric-val" id="m-hours">0h / 0h</div>
+                <div class="metric-lbl">Reclaimed / Handed</div>
+              </div>
+              <div class="metric-cell">
+                <div class="metric-val" id="m-outdoor">0m</div>
+                <div class="metric-lbl">Outdoor minutes</div>
+              </div>
+              <div class="metric-cell">
+                <div class="metric-val" id="m-social">0 · 0g</div>
+                <div class="metric-lbl">Conversations · CO₂ saved</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-kicker">Recent days · Reclaimed time alongside WHOOP recovery</div>
+          <div class="chart-rows" id="ledger-days"></div>
+
+          <div class="honest-box" id="honest-note"></div>
+        </div>
+      </section>
+
+      <!-- VIEW 3: SURFACES & WHOOP -->
+      <section class="view" id="view-surfaces">
+        <h1>Quiet hardware, live biometrics.</h1>
+        <p class="lead">
+          Reclaim lives on what you already wear — a single wrist tap, an earbud voice brief, or a
+          counter-top e-ink glance — calibrated to live WHOOP Developer API v2 data.
+        </p>
+
+        <div class="surfaces-grid">
+          <div class="device-stage">
+            <div class="section-kicker">2×2" Watch Tap</div>
+            <div class="watch-2x2">
+              <div class="watch-top" id="watch-top">REC 78% · GREEN</div>
+              <div class="watch-main" id="watch-headline">Tap when you hand off</div>
+              <div class="watch-foot" id="watch-footer">Quiet mode</div>
+            </div>
+            <button class="secondary-btn" id="btn-watch-tap">Tap Watch Button A</button>
+          </div>
+
+          <div class="device-stage">
+            <div class="section-kicker">1×1" Counter-Top / Pocket Charm</div>
+            <div class="charm-1x1">
+              <div class="charm-l1" id="charm-l1">0m BACK</div>
+              <div class="charm-l2" id="charm-l2">REC 78%</div>
+              <div class="charm-l3" id="charm-l3">TAP HANDOFF</div>
+            </div>
+            <div style="font-size:0.78rem; color:var(--ink-muted); text-align:center;">
+              1-bit monochrome e-ink posture · zero glow
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="section-kicker">WHOOP Biometric Calibration (Test how redirects adapt)</div>
+          <div class="preset-bar">
+            <button class="secondary-btn" data-preset="red">Red Recovery (26%)</button>
+            <button class="secondary-btn" data-preset="yellow">Yellow Recovery (52%)</button>
+            <button class="secondary-btn" data-preset="green">Green Recovery (84%)</button>
+          </div>
+
+          <div class="slider-grid">
+            <div class="slider-row">
+              <label><span>WHOOP Recovery</span><strong id="val-rec">78%</strong></label>
+              <input type="range" id="sl-rec" min="5" max="100" value="78" />
+            </div>
+            <div class="slider-row">
+              <label><span>Day Strain</span><strong id="val-strain">6.4</strong></label>
+              <input type="range" id="sl-strain" min="0" max="20" step="0.5" value="6.4" />
+            </div>
+            <div class="slider-row">
+              <label><span>Sleep Debt</span><strong id="val-debt">15m</strong></label>
+              <input type="range" id="sl-debt" min="0" max="120" step="5" value="15" />
+            </div>
+            <div class="slider-row">
+              <label><span>Minutes Since Movement</span><strong id="val-move">60m</strong></label>
+              <input type="range" id="sl-move" min="0" max="180" step="5" value="60" />
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+            <span style="font-size:0.8rem; color:var(--ink-muted);" id="whoop-api-status">
+              WHOOP Developer API v2 ready (OAuth 2.0 · 10-member sandbox · lock-serialized refresh).
+            </span>
+            <button class="secondary-btn" id="btn-save-bio">Save readiness snapshot</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const state = {
+      world: "corporate",
+      estimatedMinutes: 15,
+      activeSession: null,
+      suggestions: [],
+      biometrics: null,
+      lastSpokenBrief: "",
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    function showToast(msg) {
+      const el = $("toast");
+      el.textContent = msg;
+      el.classList.add("show");
+      setTimeout(() => el.classList.remove("show"), 2600);
+    }
+
+    async function api(path, opts = {}) {
+      const res = await fetch(path, {
+        headers: { "Content-Type": "application/json" },
+        ...opts,
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `HTTP ${res.status}`);
+      }
+      return res.json();
+    }
+
+    function switchView(name) {
+      document.querySelectorAll(".nav-btn").forEach((b) =>
+        b.classList.toggle("active", b.dataset.view === name)
+      );
+      document.querySelectorAll(".view").forEach((v) =>
+        v.classList.toggle("active", v.id === `view-${name}`)
+      );
+    }
+
+    document.querySelectorAll(".nav-btn").forEach((btn) =>
+      btn.addEventListener("click", () => switchView(btn.dataset.view))
+    );
+    $("whoop-chip").addEventListener("click", () => switchView("surfaces"));
+
+    // World switcher
+    document.querySelectorAll(".world-opt").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        state.world = btn.dataset.world;
+        document.querySelectorAll(".world-opt").forEach((b) =>
+          b.classList.toggle("active", b.dataset.world === state.world)
+        );
+        const isPersonal = state.world === "personal";
+        $("personal-fields").classList.toggle("visible", isPersonal);
+        $("world-note").innerHTML = isPersonal
+          ? "<strong>Personal mode:</strong> Delegates through a replaceable harness adapter (WeaveOS, Claude, Antigravity, Grokbot, Cursor) and notifies quietly only when finished or blocked."
+          : "<strong>Corporate mode:</strong> Zero employer integration, zero screen scraping, zero IT footprint. Reclaim stores only your tap and reclaimed time — never employer code, prompts, or task names.";
+      });
+    });
+
+    // Duration pills
+    document.querySelectorAll("#duration-pills .pill").forEach((pill) => {
+      pill.addEventListener("click", () => {
+        state.estimatedMinutes = Number(pill.dataset.min);
+        document.querySelectorAll("#duration-pills .pill").forEach((p) =>
+          p.classList.toggle("active", p === pill)
+        );
+      });
+    });
+
+    function renderBiometrics(bio) {
+      if (!bio) return;
+      state.biometrics = bio;
+      const dot = $("chip-dot");
+      dot.className = "zone-dot " + (bio.zone === "green" ? "" : bio.zone);
+      $("chip-text").textContent = `REC ${bio.recovery_pct}% · ${bio.zone.toUpperCase()}`;
+
+      $("sl-rec").value = bio.recovery_pct;
+      $("val-rec").textContent = `${bio.recovery_pct}%`;
+      $("sl-strain").value = bio.strain;
+      $("val-strain").textContent = String(bio.strain);
+      $("sl-debt").value = bio.sleep_debt_min;
+      $("val-debt").textContent = `${bio.sleep_debt_min}m`;
+      $("sl-move").value = bio.minutes_since_movement;
+      $("val-move").textContent = `${bio.minutes_since_movement}m`;
+    }
+
+    function renderAmbient(card) {
+      if (!card) return;
+      $("watch-top").textContent = card.watch_2x2.top;
+      $("watch-headline").textContent = card.watch_2x2.headline;
+      $("watch-footer").textContent = card.watch_2x2.footer;
+      $("btn-watch-tap").textContent = card.watch_2x2.button_a;
+      $("charm-l1").textContent = card.charm_1x1.line1;
+      $("charm-l2").textContent = card.charm_1x1.line2;
+      $("charm-l3").textContent = card.charm_1x1.line3;
+    }
+
+    function renderPeers(peers) {
+      const container = $("peers-strip");
+      if (!peers || peers.length === 0) {
+        container.innerHTML =
+          '<div class="peer-row"><span class="peer-detail">No teammates marked free right now. Load sample week &amp; team to preview social matching.</span></div>';
+        return;
+      }
+      container.innerHTML = peers
+        .map(
+          (p) => `
+          <div class="peer-row">
+            <div>
+              <div class="peer-name">${p.display_name} <span style="font-weight:400; color:var(--ink-muted);">· free ~${p.free_for_min}m</span></div>
+              <div class="peer-detail">${p.vibe} · ${p.location_hint}</div>
+            </div>
+            <button class="secondary-btn" onclick="connectPeer('${p.handle}', '${p.vibe}', '${p.display_name}')">Say hi</button>
+          </div>`
+        )
+        .join("");
+    }
+
+    window.connectPeer = async (handle, vibe, name) => {
+      await api("/v1/social/connect", {
+        method: "POST",
+        body: JSON.stringify({
+          peer_handle: handle,
+          vibe,
+          session_id: state.activeSession ? state.activeSession.session_id : null,
+        }),
+      });
+      showToast(`Sent a quiet ${vibe} invite to ${name}.`);
+    };
+
+    function renderSuggestions(suggestions, session) {
+      const list = $("suggestions-list");
+      list.innerHTML = suggestions
+        .map((s) => {
+          const isChosen = session && session.chosen_suggestion_id === s.suggestion_id;
+          return `
+            <div class="suggestion-card ${isChosen ? "chosen" : ""}">
+              <div>
+                <div class="sug-meta">
+                  <span>${s.category.toUpperCase()}</span>
+                  <span>· ${s.duration_min} min</span>
+                  ${s.outdoor ? "<span>· OUTDOORS</span>" : ""}
+                  <span>· ~${s.estimated_co2_saved_g}g CO₂ avoided</span>
+                </div>
+                <div class="sug-title">${s.title}</div>
+                <div class="sug-sub">${s.subtitle}</div>
+                <div class="sug-rationale">${s.whoop_rationale} · ${s.low_impact_note}</div>
+              </div>
+              <button class="secondary-btn" onclick='chooseSuggestion(${JSON.stringify(s).replace(/'/g, "&#39;")})'>
+                ${isChosen ? "Chosen ✓" : "Step away"}
+              </button>
+            </div>`;
+        })
+        .join("");
+    }
+
+    window.chooseSuggestion = async (s) => {
+      if (!state.activeSession) return;
+      const res = await api(`/v1/handoff/${state.activeSession.session_id}/accept`, {
+        method: "POST",
+        body: JSON.stringify({
+          suggestion_id: s.suggestion_id,
+          category: s.category,
+          title: s.title,
+          outdoor: s.outdoor,
+          estimated_co2_saved_g: s.estimated_co2_saved_g,
+          peer_handle: s.peer_handle,
+        }),
+      });
+      state.activeSession = res.session;
+      renderSuggestions(state.suggestions, res.session);
+      renderAmbient(res.ambient_card);
+      showToast(`Look away now: ${s.title}`);
+    };
+
+    function renderLedger(ledger) {
+      if (!ledger) return;
+      const t = ledger.totals;
+      const pct = Math.max(0, Math.min(100, t.reclamation_pct || 0));
+      $("ledger-pct").textContent = `${pct}%`;
+      const circumference = 2 * Math.PI * 74;
+      $("ring-arc").setAttribute("stroke-dasharray", String(Math.round(circumference)));
+      $("ring-arc").setAttribute(
+        "stroke-dashoffset",
+        String(Math.round(circumference * (1 - pct / 100)))
+      );
+
+      $("m-avoided").textContent = `${t.screen_time_avoided_min}m`;
+      $("m-hours").textContent = `${t.hours_reclaimed}h / ${t.hours_handed_to_agents}h`;
+      $("m-outdoor").textContent = `${t.outdoor_minutes}m`;
+      $("m-social").textContent = `${t.human_conversations} · ${t.co2_avoided_g}g`;
+
+      const rows = (ledger.daily || []).slice(-7).reverse();
+      $("ledger-days").innerHTML = rows.length
+        ? rows
+            .map((d) => {
+              const width = Math.min(100, Math.round((d.minutes_reclaimed / 120) * 100));
+              const recTxt = d.recovery_pct != null ? `REC ${d.recovery_pct}%` : "REC --";
+              return `
+                <div class="day-row">
+                  <span style="font-family:'JetBrains Mono',monospace; color:var(--ink-muted);">${d.date.slice(5)}</span>
+                  <div class="day-bar-track"><div class="day-bar-fill" style="width:${width}%"></div></div>
+                  <span style="font-family:'JetBrains Mono',monospace;">${d.minutes_reclaimed}m back</span>
+                  <span style="font-family:'JetBrains Mono',monospace; color:var(--ink-muted);">${recTxt}</span>
+                </div>`;
+            })
+            .join("")
+        : '<div style="font-size:0.84rem; color:var(--ink-muted);">Complete your first handoff or load the sample week to populate your daily ledger.</div>';
+
+      const a = ledger.associations;
+      const corrText =
+        a.reclaimed_vs_recovery_r != null
+          ? `7–14d association (n=${a.paired_days} days): reclaimed time vs. WHOOP recovery r = ${a.reclaimed_vs_recovery_r}, vs. resting HR r = ${a.reclaimed_vs_resting_hr_r}. `
+          : "";
+      $("honest-note").textContent = corrText + a.honest_note;
+    }
+
+    async function refreshStatus() {
+      const data = await api("/v1/status");
+      renderBiometrics(data.biometrics);
+      renderPeers(data.free_peers);
+      renderLedger(data.ledger);
+      renderAmbient(data.ambient_card);
+      $("whoop-api-status").textContent = data.whoop.connected
+        ? "WHOOP v2 OAuth connected · syncing daily recovery, strain & sleep."
+        : "WHOOP v2 OAuth ready (local check-in active until WHOOP_CLIENT_ID is set · 10-member sandbox).";
+    }
+
+    async function triggerHandoff() {
+      const payload = {
+        world: state.world,
+        adapter: state.world === "personal" ? $("adapter-select").value : "corporate_manual",
+        estimated_minutes: state.estimatedMinutes,
+        task: state.world === "personal" ? $("task-input").value : null,
+        local_hour: new Date().getHours(),
+      };
+      const res = await api("/v1/handoff", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      state.activeSession = res.session;
+      state.suggestions = res.suggestions;
+      $("brief-card").classList.add("hidden");
+      $("handoff-panel").classList.add("hidden");
+      $("away-section").classList.remove("hidden");
+      $("away-kicker").textContent =
+        `2–3 calm options · WHOOP recovery ${res.biometrics.recovery_pct}% (${res.biometrics.zone})`;
+      $("active-session-label").textContent =
+        res.session.world === "corporate"
+          ? `Corporate manual window (~${res.session.estimated_minutes}m) — zero employer data stored.`
+          : `${res.session.adapter} running quietly (~${res.session.estimated_minutes}m).`;
+      renderSuggestions(res.suggestions, res.session);
+      renderAmbient(res.ambient_card);
+      showToast("Handoff recorded. Look away from the screen.");
+    }
+
+    $("btn-handoff").addEventListener("click", triggerHandoff);
+
+    $("btn-complete-now").addEventListener("click", async () => {
+      if (!state.activeSession) return;
+      const stress = Number($("stress-select").value);
+      const res = await api(`/v1/handoff/${state.activeSession.session_id}/complete`, {
+        method: "POST",
+        body: JSON.stringify({
+          state: "done",
+          reclaimed_minutes: state.activeSession.estimated_minutes,
+          raw_outcome:
+            state.activeSession.world === "personal"
+              ? "Tests passed and branch is ready for a calm review."
+              : null,
+          self_reported_stress: stress,
+        }),
+      });
+      state.activeSession = null;
+      state.lastSpokenBrief = res.brief.spoken_brief;
+      $("away-section").classList.add("hidden");
+      $("brief-headline").textContent = res.brief.headline;
+      $("brief-summary").textContent = res.brief.summary;
+      $("brief-card").classList.remove("hidden");
+      renderLedger(res.ledger);
+      await refreshStatus();
+    });
+
+    $("btn-dismiss-brief").addEventListener("click", () => {
+      $("brief-card").classList.add("hidden");
+      $("handoff-panel").classList.remove("hidden");
+    });
+
+    $("btn-speak-brief").addEventListener("click", () => {
+      if ("speechSynthesis" in window && state.lastSpokenBrief) {
+        const u = new SpeechSynthesisUtterance(state.lastSpokenBrief);
+        u.rate = 0.96;
+        window.speechSynthesis.speak(u);
+      } else {
+        showToast(state.lastSpokenBrief || "Quiet brief ready.");
+      }
+    });
+
+    $("btn-seed-demo").addEventListener("click", async () => {
+      const res = await api("/v1/demo/seed", { method: "POST" });
+      renderBiometrics(res.biometrics);
+      renderPeers(res.free_peers);
+      renderLedger(res.ledger);
+      await refreshStatus();
+      showToast("Loaded 6-day WHOOP & reclaimed-life ledger + 2 free teammates.");
+    });
+
+    // Watch quick tap
+    $("btn-watch-tap").addEventListener("click", async () => {
+      if (!state.activeSession) {
+        await triggerHandoff();
+        switchView("step-away");
+      } else {
+        $("btn-complete-now").click();
+        switchView("step-away");
+      }
+    });
+
+    // Biometric calibration sliders & presets
+    [["sl-rec", "val-rec", "%"], ["sl-strain", "val-strain", ""], ["sl-debt", "val-debt", "m"], ["sl-move", "val-move", "m"]].forEach(
+      ([sid, vid, unit]) => {
+        $(sid).addEventListener("input", () => {
+          $(vid).textContent = `${$(sid).value}${unit}`;
+        });
+      }
+    );
+
+    const PRESETS = {
+      red: { rec: 26, strain: 9.5, debt: 75, move: 85, rhr: 61, hrv: 41 },
+      yellow: { rec: 52, strain: 8.0, debt: 35, move: 55, rhr: 56, hrv: 58 },
+      green: { rec: 84, strain: 5.5, debt: 10, move: 50, rhr: 51, hrv: 82 },
+    };
+
+    document.querySelectorAll("[data-preset]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const p = PRESETS[btn.dataset.preset];
+        const res = await api("/v1/biometrics", {
+          method: "POST",
+          body: JSON.stringify({
+            recovery_pct: p.rec,
+            strain: p.strain,
+            resting_hr_bpm: p.rhr,
+            hrv_ms: p.hrv,
+            sleep_debt_min: p.debt,
+            minutes_since_movement: p.move,
+          }),
+        });
+        renderBiometrics(res.biometrics);
+        renderAmbient(res.ambient_card);
+        showToast(`WHOOP preset applied: ${p.rec}% (${res.biometrics.zone})`);
+      });
+    });
+
+    $("btn-save-bio").addEventListener("click", async () => {
+      const res = await api("/v1/biometrics", {
+        method: "POST",
+        body: JSON.stringify({
+          recovery_pct: Number($("sl-rec").value),
+          strain: Number($("sl-strain").value),
+          sleep_debt_min: Number($("sl-debt").value),
+          minutes_since_movement: Number($("sl-move").value),
+        }),
+      });
+      renderBiometrics(res.biometrics);
+      renderAmbient(res.ambient_card);
+      showToast("Readiness snapshot saved locally.");
+    });
+
+    refreshStatus().catch((e) => showToast(e.message));
+  </script>
+</body>
+</html>
